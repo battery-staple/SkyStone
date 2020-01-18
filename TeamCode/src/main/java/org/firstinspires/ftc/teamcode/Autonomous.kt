@@ -25,9 +25,9 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
 
     private val drivePower = 1f
     private val K = 1f
-    private val armPower = 1f
-    internal var clawPower: Float = 0f
-    internal var slidePower: Float = 0f
+//    private val armPower = 1f
+//    internal var clawPower: Float = 0f
+//    internal var slidePower: Float = 0f
 
     //initialize directions
 //    private var armDirection = Direction.STOP
@@ -116,19 +116,19 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
 
 //        armDirection = Direction.FORWARDS
         arm.direction = Direction.FORWARDS
-        grab()
+//        grab()
         waitSeconds(1.0)
 //        armDirection = Direction.STOP
         arm.direction = Direction.STOP
-        grab()
+//        grab()
 
-        driveSeconds(4, 0.5)
+        driveSeconds(4, 0.5f)
 
-        slideDirection = Direction.FORWARDS
-        grab()
+        slide.direction = Direction.FORWARDS
+//        grab()
         waitSeconds(0.1)
-        slideDirection = Direction.STOP
-        grab()
+        slide.direction = Direction.STOP
+//        grab()
 //        telemetry.addData("info", "gonna drive")
 //        drive(0.5, 0.0, 0.0)
 //        telemetry.addData("info", "drove")
@@ -231,7 +231,7 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
             "AZne3+j/////AAABmW73vsKOpUy1iIrLi6QIERVkROfCZRH7Psc0Hfu51ebH5+Rwr8HmBZkBBLk/KkETR6oBhjAWkR9Qwr0KySE3niFw7Xr5zG663LsKdTQB5Yhdv3gi+Oo75YIP2kdvZU4CdlvhaCThNDPNRb5/ca4qjm45ANH6HDyKqoHpdQLo6BLBT6md3ufUmuWSILQgxxWH0W4koG8KqpDnEN2nI1p6zFx1t9lSQkju4cxMqkkt5FSTHwlowPXZK0SzC/OTiUO0lbMewL9k2abO3+RdoaFPptvfVO8IXH7hP9BV+PuX1jgdjtd7cP301XnfdwE8U/x9TENp9pyjmr+jmlE4a3r5QTNM0k0iV61CPk/3VXlQzNDL"
     }
 
-    private fun drive(forward: Double, right: Double = 0.0, clockwise: Double = 0.0) {
+    private fun drive(forward: Float, right: Float = 0f, clockwise: Float = 0f) {
 
 //        val forward = (-gamepad1.left_stick_y).toDouble() // push joystick1 forward to go forward
 //        val right =
@@ -262,16 +262,19 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
         }
 
         frontLeft.power = front_left
-        frontLeft!!.setPower(front_left * drivePower)
-        frontRight!!.setPower(front_right * drivePower)
-        backRight!!.setPower(rear_right * drivePower)
-        backLeft!!.setPower(rear_left * drivePower)
+        frontRight.power = front_right
+        backRight.power = rear_right
+        backLeft.power = rear_left
+//        frontLeft!!.setPower(front_left * drivePower)
+//        frontRight!!.setPower(front_right * drivePower)
+//        backRight!!.setPower(rear_right * drivePower)
+//        backLeft!!.setPower(rear_left * drivePower)
 
     }
 
-    private fun stopDriving() = drive(0.0)
+    private fun stopDriving() = drive(0f)
 
-    private fun driveSeconds(seconds: Long, forward: Double = 0.0, right: Double = 0.0, clockwise: Double = 0.0) {
+    private fun driveSeconds(seconds: Long, forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f) {
         drive(forward, right, clockwise)
         TimeUnit.SECONDS.sleep(seconds)
         stopDriving()
@@ -299,7 +302,15 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
 
     private fun waitSeconds(time: Double) {
         resetStartTime()
-        while (runtime < time && opModeIsActive()) {}
+        while (runtime < time && opModeIsActive());
+        return
+    }
+
+    private fun NonPositionalMotorController.moveSeconds(time: Double, power: Float = 0f, direction: Direction = Direction.STOP) {
+        this.direction = direction
+        this.power = abs(power)
+        waitSeconds(time)
+        this.direction = Direction.STOP
     }
 
 //    private fun moveSlide(power: Double) {
