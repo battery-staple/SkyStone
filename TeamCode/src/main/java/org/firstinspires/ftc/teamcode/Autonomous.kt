@@ -1,26 +1,22 @@
 package org.firstinspires.ftc.teamcode
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp
-import com.qualcomm.robotcore.hardware.DcMotor
-import com.qualcomm.robotcore.hardware.DcMotorSimple
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory
-import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector
-import org.firstinspires.ftc.teamcode.helpers.Direction
+import org.firstinspires.ftc.teamcode.helpers.*
 import java.lang.Math.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 
 @Autonomous(name = "Vision Drive", group = "Iterative Opmode")
-class Autonomous : LinearOpMode() {
+class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
+
+    override val opMode: OpMode = this
 
     private var vuforia: VuforiaLocalizer? = null
 
@@ -34,27 +30,42 @@ class Autonomous : LinearOpMode() {
     internal var slidePower: Float = 0f
 
     //initialize directions
-    private var armDirection = Direction.STOP
-    internal var clawDirection = Direction.STOP
+//    private var armDirection = Direction.STOP
+//    internal var clawDirection = Direction.STOP
     internal var slideDirection = Direction.STOP
 
-    //    private MotorController frontLeft = null;
-    //    private MotorController frontRight = null;
-    //    private MotorController backLeft = null;
-    //    private MotorController backRight = null;
-    //    private MotorController arm = null;
-    //    private MotorController intake = null;
-    //    private MotorController liftRight = null;
-    //    private MotorController liftLeft = null;
+    private val frontLeft = PowerBasedNonPositionalMotorController(this).apply {
+        powerMultiplier = drivePower
+    }
+    private val frontRight = PowerBasedNonPositionalMotorController(this).apply {
+        powerMultiplier = drivePower
+    }
+    private val backLeft = PowerBasedNonPositionalMotorController(this).apply {
+        powerMultiplier = drivePower
+    }
+    private val backRight = PowerBasedNonPositionalMotorController(this).apply {
+        powerMultiplier = drivePower
+    }
+    private val arm = PowerBasedNonPositionalMotorController(this).apply {
+        direction = Direction.STOP
+    }
+    private val intake  = PowerBasedNonPositionalMotorController(this).apply {
+        direction = Direction.STOP
+    }
+    private val slide = PowerBasedNonPositionalMotorController(this).apply {
+        brake = true
+    }
+//    private val liftRight = PowerBasedNonPositionalMotorController(this)
+//    private val liftLeft = PowerBasedNonPositionalMotorController(this)
 
-    private var frontLeft: DcMotor? = null
-    private var frontRight: DcMotor? = null
-    private var backLeft: DcMotor? = null
-    private var backRight: DcMotor? = null
-    private var arm: DcMotor? = null
-    private var intake: DcMotor? = null
-    private var liftRight: DcMotor? = null
-    private var liftLeft: DcMotor? = null
+//    private var frontLeft: DcMotor? = null
+//    private var frontRight: DcMotor? = null
+//    private var backLeft: DcMotor? = null
+//    private var backRight: DcMotor? = null
+//    private var arm: DcMotor? = null
+//    private var intake: DcMotor? = null
+//    private var liftRight: DcMotor? = null
+//    private var liftLeft: DcMotor? = null
 
     private fun isPressed(button: Float): Boolean {
         return button > 0.1 //change this value if necessary
@@ -66,26 +77,100 @@ class Autonomous : LinearOpMode() {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        frontLeft = hardwareMap.get(DcMotor::class.java, "frontLeft")
-        frontRight = hardwareMap.get(DcMotor::class.java, "frontRight")
-        backLeft = hardwareMap.get(DcMotor::class.java, "backLeft")
-        backRight = hardwareMap.get(DcMotor::class.java, "backRight")
-        arm = hardwareMap.get(DcMotor::class.java, "arm")
-        intake = hardwareMap.get(DcMotor::class.java, "intake")
-        liftRight = hardwareMap.get(DcMotor::class.java, "liftRight")
-        liftLeft = hardwareMap.get(DcMotor::class.java, "liftLeft")
+        frontLeft.addMotor(name = "frontLeft", power = -1f)
+        frontRight.addMotor(name = "frontRight")
+        backLeft.addMotor(name = "backLeft", power = -1f)
+        backRight.addMotor(name = "backRight")
+        arm.addMotor(name = "arm")
+        intake.addMotor(name = "intake")
+        slide.addMotor(name = "liftRight", power = -1f)
+        slide.addMotor(name = "liftLeft", power = 1f)
+//        frontLeft = hardwareMap.get(DcMotor::class.java, "frontLeft")
+//        frontRight = hardwareMap.get(DcMotor::class.java, "frontRight")
+//        backLeft = hardwareMap.get(DcMotor::class.java, "backLeft")
+//        backRight = hardwareMap.get(DcMotor::class.java, "backRight")
+//        arm = hardwareMap.get(DcMotor::class.java, "arm")
+//        intake = hardwareMap.get(DcMotor::class.java, "intake")
+//        liftRight = hardwareMap.get(DcMotor::class.java, "liftRight")
+//        liftLeft = hardwareMap.get(DcMotor::class.java, "liftLeft")
 
 
-        frontLeft!!.direction = DcMotorSimple.Direction.REVERSE
-        backLeft!!.direction = DcMotorSimple.Direction.REVERSE
+//        frontLeft.direction = DcMotorSimple.Direction.REVERSE
+//        backLeft!!.direction = DcMotorSimple.Direction.REVERSE
 
-        liftLeft!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
-        liftRight!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
+//        liftLeft!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
+//        liftRight!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
+
+//        in init:
+//        liftLeft.brake = true
+//        liftRight.brake = true
 
         //Display Initialized
         telemetry.addData("Status", "Initialized")
 
+//        if (tfod != null) {
+//            tfod!!.shutdown()
+//        }
+        tfod?.shutdown()
 
+
+//        armDirection = Direction.FORWARDS
+        arm.direction = Direction.FORWARDS
+        grab()
+        waitSeconds(1.0)
+//        armDirection = Direction.STOP
+        arm.direction = Direction.STOP
+        grab()
+
+        driveSeconds(4, 0.5)
+
+        slideDirection = Direction.FORWARDS
+        grab()
+        waitSeconds(0.1)
+        slideDirection = Direction.STOP
+        grab()
+//        telemetry.addData("info", "gonna drive")
+//        drive(0.5, 0.0, 0.0)
+//        telemetry.addData("info", "drove")
+//        telemetry.update()
+//        TimeUnit.SECONDS.sleep(1)
+//        telemetry.addData("info", "waited")
+//        telemetry.update()
+//        stopDriving()
+    }
+
+    /**
+     * Initialize the Vuforia localization engine.
+     */
+    private fun initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        val parameters = VuforiaLocalizer.Parameters()
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters)
+
+        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
+    }
+
+    /**
+     * Initialize the TensorFlow Object Detection engine.
+     */
+    private fun initTfod() {
+        val tfodMonitorViewId = hardwareMap.appContext.resources.getIdentifier(
+            "tfodMonitorViewId", "id", hardwareMap.appContext.packageName
+        )
+        val tfodParameters = TFObjectDetector.Parameters(tfodMonitorViewId)
+        tfodParameters.minimumConfidence = 0.8
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia)
+        tfod!!.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT)
+    }
+
+    private fun initTensorFlow() {
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia()
@@ -135,69 +220,12 @@ class Autonomous : LinearOpMode() {
 //                }
 //            }
         }
-
-        if (tfod != null) {
-            tfod!!.shutdown()
-        }
-
-        armDirection = Direction.FORWARDS
-        grab()
-        TimeUnit.SECONDS.sleep(1)
-        armDirection = Direction.STOP
-        grab()
-
-        driveSeconds(4, 0.5)
-
-        slideDirection = Direction.FORWARDS
-        grab()
-        TimeUnit.MILLISECONDS.sleep(100)
-        slideDirection = Direction.STOP
-        grab()
-//        telemetry.addData("info", "gonna drive")
-//        drive(0.5, 0.0, 0.0)
-//        telemetry.addData("info", "drove")
-//        telemetry.update()
-//        TimeUnit.SECONDS.sleep(1)
-//        telemetry.addData("info", "waited")
-//        telemetry.update()
-//        stopDriving()
-    }
-
-    /**
-     * Initialize the Vuforia localization engine.
-     */
-    private fun initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        val parameters = VuforiaLocalizer.Parameters()
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters)
-
-        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
-    }
-
-    /**
-     * Initialize the TensorFlow Object Detection engine.
-     */
-    private fun initTfod() {
-        val tfodMonitorViewId = hardwareMap.appContext.resources.getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.packageName
-        )
-        val tfodParameters = TFObjectDetector.Parameters(tfodMonitorViewId)
-        tfodParameters.minimumConfidence = 0.8
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia)
-        tfod!!.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT)
     }
 
     companion object {
-        private val TFOD_MODEL_ASSET = "Skystone.tflite"
-        private val LABEL_FIRST_ELEMENT = "Stone"
-        private val LABEL_SECOND_ELEMENT = "Skystone"
+        private const val TFOD_MODEL_ASSET = "Skystone.tflite"
+        private const val LABEL_FIRST_ELEMENT = "Stone"
+        private const val LABEL_SECOND_ELEMENT = "Skystone"
 
         private val VUFORIA_KEY =
             "AZne3+j/////AAABmW73vsKOpUy1iIrLi6QIERVkROfCZRH7Psc0Hfu51ebH5+Rwr8HmBZkBBLk/KkETR6oBhjAWkR9Qwr0KySE3niFw7Xr5zG663LsKdTQB5Yhdv3gi+Oo75YIP2kdvZU4CdlvhaCThNDPNRb5/ca4qjm45ANH6HDyKqoHpdQLo6BLBT6md3ufUmuWSILQgxxWH0W4koG8KqpDnEN2nI1p6zFx1t9lSQkju4cxMqkkt5FSTHwlowPXZK0SzC/OTiUO0lbMewL9k2abO3+RdoaFPptvfVO8IXH7hP9BV+PuX1jgdjtd7cP301XnfdwE8U/x9TENp9pyjmr+jmlE4a3r5QTNM0k0iV61CPk/3VXlQzNDL"
@@ -233,6 +261,7 @@ class Autonomous : LinearOpMode() {
             rear_right /= max
         }
 
+        frontLeft.power = front_left
         frontLeft!!.setPower(front_left * drivePower)
         frontRight!!.setPower(front_right * drivePower)
         backRight!!.setPower(rear_right * drivePower)
@@ -248,29 +277,34 @@ class Autonomous : LinearOpMode() {
         stopDriving()
     }
 
-    private fun grab() {
-        //        switch (armDirection) {
-        //            case FORWARDS:
-        //                arm.setTargetPosition(0);
-        //                arm.setPower(armPower);
-        //                break;
-        //            case BACKWARDS:
-        //                arm.setTargetPosition(-2000);
-        //                arm.setPower(armPower);
-        //                break;
-        //            case STOP:
-        //                arm.setPower(0);
-        //                break;
-        //        }
+//    private fun grab() {
+//        //        switch (armDirection) {
+//        //            case FORWARDS:
+//        //                arm.setTargetPosition(0);
+//        //                arm.setPower(armPower);
+//        //                break;
+//        //            case BACKWARDS:
+//        //                arm.setTargetPosition(-2000);
+//        //                arm.setPower(armPower);
+//        //                break;
+//        //            case STOP:
+//        //                arm.setPower(0);
+//        //                break;
+//        //        }
+//
+//        arm!!.power = (armDirection.multiplier * armPower).toDouble()
+//        intake!!.power = (clawDirection.multiplier * clawPower).toDouble()
+//        moveSlide((slideDirection.multiplier * slidePower).toDouble())
+//    }
 
-        arm!!.power = (armDirection.multiplier * armPower).toDouble()
-        intake!!.power = (clawDirection.multiplier * clawPower).toDouble()
-        moveSlide((slideDirection.multiplier * slidePower).toDouble())
+    private fun waitSeconds(time: Double) {
+        resetStartTime()
+        while (runtime < time && opModeIsActive()) {}
     }
 
-    private fun moveSlide(power: Double) {
-        liftLeft!!.setPower(power)
-        liftRight!!.setPower(-power)
-    }
+//    private fun moveSlide(power: Double) {
+//        liftLeft!!.setPower(power)
+//        liftRight!!.setPower(-power)
+//    }
 }
 
