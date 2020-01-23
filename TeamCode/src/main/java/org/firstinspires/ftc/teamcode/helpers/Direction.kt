@@ -20,6 +20,10 @@ enum class Direction(val multiplier: Int) {
  * Currently only works with Float, but can be expanded
  * to other types relatively easily.
  */
-infix fun Float.with(direction: Direction): Float {
-    return abs(this) * direction.multiplier
+infix fun Float.with(direction: Direction?): Float {
+    return if (direction != null) {
+        abs(this) * direction.multiplier
+    } else {
+        this
+    }
 }

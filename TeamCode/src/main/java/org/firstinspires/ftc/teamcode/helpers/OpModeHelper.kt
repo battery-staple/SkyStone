@@ -25,7 +25,7 @@ interface DcMotorInfoOpModeHelper: OpModeHelper {
 
 interface MotorControllerOpModeHelper: OpModeHelper {
     fun createMotorController(
-        runMode: DcMotor.RunMode, motors: HashSet<DcMotorInfo>,
+        runMode: DcMotor.RunMode, motors: MutableList<DcMotorInfo>,
         powerMultiplier: Float, brake: Boolean? = true): MotorController = when(runMode) {
         RUN_TO_POSITION -> PositionalMotorController(opMode, motors, powerMultiplier, brake)
         RUN_USING_ENCODER -> SpeedBasedNonPositionalMotorController(opMode, motors, powerMultiplier, brake)

@@ -5,12 +5,12 @@ import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import java.util.*
-import kotlin.collections.HashSet
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 abstract class MotorController @JvmOverloads constructor(
     override val opMode: OpMode,
-    protected val motors: MutableCollection<DcMotorInfo> = HashSet(),
+    protected val motors: MutableList<DcMotorInfo> = ArrayList(),
     @JvmField var powerMultiplier: Float = 1f,
     @JvmField var brake: Boolean? = true,
     var defaultPower: Float = 0f
@@ -52,7 +52,7 @@ abstract class MotorController @JvmOverloads constructor(
         motors += motor
     }
 
-    fun addMotors(motors: HashSet<DcMotorInfo>) {
+    fun addMotors(motors: Collection<DcMotorInfo>) {
         this.motors += motors
     }
 
@@ -73,7 +73,7 @@ abstract class MotorController @JvmOverloads constructor(
 
 abstract class NonPositionalMotorController @JvmOverloads constructor(
     opMode: OpMode,
-    motors: MutableCollection<DcMotorInfo> = HashSet(),
+    motors: MutableList<DcMotorInfo> = ArrayList(),
     powerMultiplier: Float = 1f,
     brake: Boolean? = true,
     defaultPower: Float = 0f
@@ -132,7 +132,7 @@ abstract class NonPositionalMotorController @JvmOverloads constructor(
 
 open class PowerBasedNonPositionalMotorController @JvmOverloads constructor(
     opMode: OpMode,
-    motors: MutableCollection<DcMotorInfo> = HashSet(),
+    motors: MutableList<DcMotorInfo> = ArrayList(),
     powerMultiplier: Float = 1f,
     brake: Boolean? = true,
     defaultPower: Float = 0f
@@ -146,7 +146,7 @@ open class PowerBasedNonPositionalMotorController @JvmOverloads constructor(
 
 open class SpeedBasedNonPositionalMotorController @JvmOverloads constructor(
     opMode: OpMode,
-    motors: MutableCollection<DcMotorInfo> = HashSet(),
+    motors: MutableList<DcMotorInfo> = ArrayList(),
     powerMultiplier: Float = 1f,
     brake: Boolean? = true,
     defaultPower: Float = 0f
@@ -162,7 +162,7 @@ class WheelList (
     var frontLeft: DcMotorInfo,
     var frontRight: DcMotorInfo,
     var backLeft: DcMotorInfo,
-    var backRight: DcMotorInfo) : AbstractMutableList<DcMotorInfo>(), MutableCollection<DcMotorInfo> {
+    var backRight: DcMotorInfo) : AbstractMutableList<DcMotorInfo>() {
 
     override val size: Int = 4
 
@@ -179,7 +179,6 @@ class WheelList (
             return@set get()
         }
     }
-
     override fun removeAt(index: Int): Nothing =
         throw NotImplementedError("WheelList cannot contain less than four wheels")
 
@@ -252,12 +251,15 @@ class DriveableSpeedBasedNonPositionalMotorController @JvmOverloads constructor(
 
 class PositionalMotorController @JvmOverloads constructor(
     opMode: OpMode,
-    motors: MutableCollection<DcMotorInfo> = HashSet(),
+    motors: MutableList<DcMotorInfo> = ArrayList(),
     powerMultiplier: Float = 1f,
     brake: Boolean? = true,
-    defaultPower: Float = 0f,
-    encoderMode: DcMotor.RunMode = DcMotor.RunMode.RUN_USING_ENCODER
+    defaultPower: Float = 0f
 ) : MotorController(opMode, motors, powerMultiplier, brake, defaultPower) {
+
+    init {
+
+    }
 
     var targetPosition = 0
         set(value) {
@@ -276,4 +278,5 @@ class PositionalMotorController @JvmOverloads constructor(
                 motor.runPower = power * powerMultiplier
             }
         }
+
 }

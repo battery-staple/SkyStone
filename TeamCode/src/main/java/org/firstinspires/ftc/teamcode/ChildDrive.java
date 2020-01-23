@@ -9,10 +9,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.helpers.Direction;
 //import org.firstinspires.ftc.teamcode.helpers.MC;
-import org.firstinspires.ftc.teamcode.helpers.MotorController;
+//import org.firstinspires.ftc.teamcode.helpers.MotorController;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
 
 import java.util.Collections;
 import java.util.Arrays;
@@ -88,10 +87,10 @@ public class ChildDrive extends OpMode {
         telemetry.addData("Status", "Initialized");
 
 
-        arm.setTargetPosition(0);
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        arm.setPower(0.7);
-        telemetry.addData(String.valueOf(arm.getTargetPosition()), "");
+//        arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        arm.setPower(0.7);
+//        telemetry.addData(String.valueOf(arm.getTargetPosition()), "");
     }
 
 
@@ -157,7 +156,7 @@ public class ChildDrive extends OpMode {
             //otherwise, stop.
             if (clawDirection == Direction.FORWARDS && !isPressed(gamepad1.x)) {
 //            if (true) {
-                clawPower = 0.1f;
+                clawPower = 0.2f;
             } else {
                 clawDirection = Direction.STOP;
             }
@@ -210,19 +209,21 @@ public class ChildDrive extends OpMode {
     }
 
     private void grab() {
-        switch (armDirection) {
-            case FORWARDS:
-                arm.setTargetPosition(0);
-                arm.setPower(armPower);
-                break;
-            case BACKWARDS:
-                arm.setTargetPosition(-2000);
-                arm.setPower(armPower);
-                break;
-            case STOP:
-                arm.setPower(0);
-                break;
-        }
+//        switch (armDirection) {
+//            case FORWARDS:
+//                arm.setTargetPosition(0);
+//                arm.setPower(armPower);
+//                break;
+//            case BACKWARDS:
+//                arm.setTargetPosition(-2000);
+//                arm.setPower(armPower);
+//                break;
+//            case STOP:
+//                arm.setPower(0);
+//                break;
+//        }
+
+        arm.setPower(armDirection.getMultiplier() * armPower);
         intake.setPower(clawDirection.getMultiplier() * clawPower);
         moveSlide(slideDirection.getMultiplier() * slidePower);
     }

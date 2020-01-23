@@ -8,13 +8,13 @@ import org.firstinspires.ftc.robotcore.external.ClassFactory
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector
 import org.firstinspires.ftc.teamcode.helpers.*
-import java.lang.Math.*
-import java.util.*
-import java.util.concurrent.TimeUnit
+//import java.lang.Math.*
+import kotlin.math.*
+import org.firstinspires.ftc.teamcode.helpers.Direction.*
 
 
 @Autonomous(name = "Vision Drive", group = "Iterative Opmode")
-class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
+class Autonomous : LinearOpMode(), MotorControllerOpModeHelper, DcMotorInfoOpModeHelper {
 
     override val opMode: OpMode = this
 
@@ -32,40 +32,44 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
     //initialize directions
 //    private var armDirection = Direction.STOP
 //    internal var clawDirection = Direction.STOP
-    internal var slideDirection = Direction.STOP
+//    internal var slideDirection = Direction.STOP
 
-    private val frontLeft = PowerBasedNonPositionalMotorController(this).apply {
-        powerMultiplier = drivePower
-    }
-    private val frontRight = PowerBasedNonPositionalMotorController(this).apply {
-        powerMultiplier = drivePower
-    }
-    private val backLeft = PowerBasedNonPositionalMotorController(this).apply {
-        powerMultiplier = drivePower
-    }
-    private val backRight = PowerBasedNonPositionalMotorController(this).apply {
-        powerMultiplier = drivePower
-    }
-    private val arm = PowerBasedNonPositionalMotorController(this).apply {
-        direction = Direction.STOP
-    }
-    private val intake  = PowerBasedNonPositionalMotorController(this).apply {
-        direction = Direction.STOP
-    }
-    private val slide = PowerBasedNonPositionalMotorController(this).apply {
-        brake = true
-    }
-//    private val liftRight = PowerBasedNonPositionalMotorController(this)
-//    private val liftLeft = PowerBasedNonPositionalMotorController(this)
+    private val wheels = DriveablePowerBasedNonPositionalMotorController(this, WheelList(
+        frontLeft = DcMotorInfo.fromName(motorName = "frontLeft", power = -1f),
+        frontRight = DcMotorInfo.fromName(motorName = "frontRight", power = 1f),
+        backLeft = DcMotorInfo.fromName(motorName = "backLeft", power = -1f),
+        backRight = DcMotorInfo.fromName(motorName = "backRight", power = 1f)
+    ))
 
-//    private var frontLeft: DcMotor? = null
-//    private var frontRight: DcMotor? = null
-//    private var backLeft: DcMotor? = null
-//    private var backRight: DcMotor? = null
-//    private var arm: DcMotor? = null
-//    private var intake: DcMotor? = null
-//    private var liftRight: DcMotor? = null
-//    private var liftLeft: DcMotor? = null
+//    private val frontLeft = PowerBasedNonPositionalMotorController(this).apply {
+//        powerMultiplier = drivePower
+//    }
+//    private val frontRight = PowerBasedNonPositionalMotorController(this).apply {
+//        powerMultiplier = drivePower
+//    }
+//    private val backLeft = PowerBasedNonPositionalMotorController(this).apply {
+//        powerMultiplier = drivePower
+//    }
+//    private val backRight = PowerBasedNonPositionalMotorController(this).apply {
+//        powerMultiplier = drivePower
+//    }
+
+    private val arm = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
+        DcMotorInfo.fromName(motorName = "arm")
+    )
+    ).apply {
+        direction = STOP
+        defaultPower = 1f
+    }
+    private val claw = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
+        DcMotorInfo.fromName(motorName = "intake")
+    )).apply {
+        direction = STOP
+    }
+    private val slide = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
+        DcMotorInfo.fromName(motorName = "liftRight", power = -1f),
+        DcMotorInfo.fromName(motorName = "liftLeft", power = 1f)
+    ), brake = true)
 
     private fun isPressed(button: Float): Boolean {
         return button > 0.1 //change this value if necessary
@@ -77,66 +81,25 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        frontLeft.addMotor(name = "frontLeft", power = -1f)
-        frontRight.addMotor(name = "frontRight")
-        backLeft.addMotor(name = "backLeft", power = -1f)
-        backRight.addMotor(name = "backRight")
-        arm.addMotor(name = "arm")
-        intake.addMotor(name = "intake")
-        slide.addMotor(name = "liftRight", power = -1f)
-        slide.addMotor(name = "liftLeft", power = 1f)
-//        frontLeft = hardwareMap.get(DcMotor::class.java, "frontLeft")
-//        frontRight = hardwareMap.get(DcMotor::class.java, "frontRight")
-//        backLeft = hardwareMap.get(DcMotor::class.java, "backLeft")
-//        backRight = hardwareMap.get(DcMotor::class.java, "backRight")
-//        arm = hardwareMap.get(DcMotor::class.java, "arm")
-//        intake = hardwareMap.get(DcMotor::class.java, "intake")
-//        liftRight = hardwareMap.get(DcMotor::class.java, "liftRight")
-//        liftLeft = hardwareMap.get(DcMotor::class.java, "liftLeft")
 
-
-//        frontLeft.direction = DcMotorSimple.Direction.REVERSE
-//        backLeft!!.direction = DcMotorSimple.Direction.REVERSE
-
-//        liftLeft!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
-//        liftRight!!.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
-
-//        in init:
-//        liftLeft.brake = true
-//        liftRight.brake = true
+//        frontLeft.addMotor(name = "frontLeft", power = -1f)
+//        frontRight.addMotor(name = "frontRight")
+//        backLeft.addMotor(name = "backLeft", power = -1f)
+//        backRight.addMotor(name = "backRight")
+//        arm.addMotor(name = "arm")
+//        claw.addMotor(name = "intake")
+//        slide.addMotor(name = "liftRight", power = -1f)
+//        slide.addMotor(name = "liftLeft", power = 1f)
 
         //Display Initialized
         telemetry.addData("Status", "Initialized")
 
-//        if (tfod != null) {
-//            tfod!!.shutdown()
-//        }
         tfod?.shutdown()
 
-
-//        armDirection = Direction.FORWARDS
-        arm.direction = Direction.FORWARDS
-//        grab()
-        waitSeconds(1.0)
-//        armDirection = Direction.STOP
-        arm.direction = Direction.STOP
-//        grab()
-
-        driveSeconds(4, 0.5f)
-
-        slide.direction = Direction.FORWARDS
-//        grab()
-        waitSeconds(0.1)
-        slide.direction = Direction.STOP
-//        grab()
-//        telemetry.addData("info", "gonna drive")
-//        drive(0.5, 0.0, 0.0)
-//        telemetry.addData("info", "drove")
-//        telemetry.update()
-//        TimeUnit.SECONDS.sleep(1)
-//        telemetry.addData("info", "waited")
-//        telemetry.update()
-//        stopDriving()
+        //Actual Autonomous
+        arm.move(direction = FORWARDS, seconds = 1.0)
+        wheels.driveSeconds(4.0, forward = 0.5f)
+        slide.move(direction = FORWARDS, seconds = 0.1)
     }
 
     /**
@@ -231,54 +194,46 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
             "AZne3+j/////AAABmW73vsKOpUy1iIrLi6QIERVkROfCZRH7Psc0Hfu51ebH5+Rwr8HmBZkBBLk/KkETR6oBhjAWkR9Qwr0KySE3niFw7Xr5zG663LsKdTQB5Yhdv3gi+Oo75YIP2kdvZU4CdlvhaCThNDPNRb5/ca4qjm45ANH6HDyKqoHpdQLo6BLBT6md3ufUmuWSILQgxxWH0W4koG8KqpDnEN2nI1p6zFx1t9lSQkju4cxMqkkt5FSTHwlowPXZK0SzC/OTiUO0lbMewL9k2abO3+RdoaFPptvfVO8IXH7hP9BV+PuX1jgdjtd7cP301XnfdwE8U/x9TENp9pyjmr+jmlE4a3r5QTNM0k0iV61CPk/3VXlQzNDL"
     }
 
-    private fun drive(forward: Float, right: Float = 0f, clockwise: Float = 0f) {
+//    private fun drive(forward: Float, right: Float = 0f, clockwise: Float = 0f) {
+//
+////        val forward = (-gamepad1.left_stick_y).toDouble() // push joystick1 forward to go forward
+////        val right =
+////            (-gamepad1.left_stick_x).toDouble() // push joystick1 to the right to strafe right
+////        val clockwise =
+////            (-gamepad1.right_stick_x).toDouble() // push joystick2 to the right to rotate clockwise
+//
+//        var front_left = forward + right + K * clockwise
+//        var front_right = forward - right - K * clockwise
+//        var rear_left = forward - right + K * clockwise
+//        var rear_right = forward + right - K * clockwise
+//
+//
+//
+//        val max = Collections.max(
+//            listOf(front_left, front_right, rear_left, rear_right)
+//                .map(::abs)
+//        ) // gets the largest absolute value of the direction powers
+//
+//        if (max > 1) {
+//            front_left /= max
+//            front_right /= max
+//            rear_left /= max
+//            rear_right /= max
+//        }
+//
+//        frontLeft.power = front_left
+//        frontRight.power = front_right
+//        backRight.power = rear_right
+//        backLeft.power = rear_left
+//    }
 
-//        val forward = (-gamepad1.left_stick_y).toDouble() // push joystick1 forward to go forward
-//        val right =
-//            (-gamepad1.left_stick_x).toDouble() // push joystick1 to the right to strafe right
-//        val clockwise =
-//            (-gamepad1.right_stick_x).toDouble() // push joystick2 to the right to rotate clockwise
+//    private fun stopDriving() = drive(0f)
 
-        var front_left = forward + right + K * clockwise
-        var front_right = forward - right - K * clockwise
-        var rear_left = forward - right + K * clockwise
-        var rear_right = forward + right - K * clockwise
-
-
-        val max = Collections.max(
-            listOf(
-                abs(front_left),
-                abs(front_right),
-                abs(rear_left),
-                abs(rear_right)//,
-            )
-        ) // gets the largest absolute value of the direction powers
-
-        if (max > 1) {
-            front_left /= max
-            front_right /= max
-            rear_left /= max
-            rear_right /= max
-        }
-
-        frontLeft.power = front_left
-        frontRight.power = front_right
-        backRight.power = rear_right
-        backLeft.power = rear_left
-//        frontLeft!!.setPower(front_left * drivePower)
-//        frontRight!!.setPower(front_right * drivePower)
-//        backRight!!.setPower(rear_right * drivePower)
-//        backLeft!!.setPower(rear_left * drivePower)
-
-    }
-
-    private fun stopDriving() = drive(0f)
-
-    private fun driveSeconds(seconds: Long, forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f) {
-        drive(forward, right, clockwise)
-        TimeUnit.SECONDS.sleep(seconds)
-        stopDriving()
-    }
+//    private fun driveSeconds(seconds: Long, forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f) {
+//        drive(forward, right, clockwise)
+//        waitSeconds(seconds)
+//        stopDriving()
+//    }
 
 //    private fun grab() {
 //        //        switch (armDirection) {
@@ -296,22 +251,22 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelpers {
 //        //        }
 //
 //        arm!!.power = (armDirection.multiplier * armPower).toDouble()
-//        intake!!.power = (clawDirection.multiplier * clawPower).toDouble()
+//        claw!!.power = (clawDirection.multiplier * clawPower).toDouble()
 //        moveSlide((slideDirection.multiplier * slidePower).toDouble())
 //    }
 
-    private fun waitSeconds(time: Double) {
-        resetStartTime()
-        while (runtime < time && opModeIsActive());
-        return
-    }
+//    private fun waitSeconds(time: Double) {
+//        resetStartTime()
+//        while (runtime < time && opModeIsActive());
+//        return
+//    }
 
-    private fun NonPositionalMotorController.moveSeconds(time: Double, power: Float = 0f, direction: Direction = Direction.STOP) {
-        this.direction = direction
-        this.power = abs(power)
-        waitSeconds(time)
-        this.direction = Direction.STOP
-    }
+//    private fun NonPositionalMotorController.moveSeconds(time: Double, power: Float = 0f, direction: Direction = Direction.STOP) {
+//        this.direction = direction
+//        this.power = abs(power)
+//        waitSeconds(time)
+//        this.direction = Direction.STOP
+//    }
 
 //    private fun moveSlide(power: Double) {
 //        liftLeft!!.setPower(power)
