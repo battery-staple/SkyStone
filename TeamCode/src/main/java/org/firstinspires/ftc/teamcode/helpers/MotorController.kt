@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.helpers
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.HardwareMap
@@ -15,7 +14,7 @@ abstract class MotorController @JvmOverloads constructor(
     @JvmField var powerMultiplier: Float = 1f,
     @JvmField var brake: Boolean? = true,
     var defaultPower: Float = 0f
-) : DcMotorInfoOpModeHelpers {
+) : DcMotorInfoOpModeHelper {
 
     init {
         motors.forEach {
@@ -78,7 +77,7 @@ abstract class NonPositionalMotorController @JvmOverloads constructor(
     powerMultiplier: Float = 1f,
     brake: Boolean? = true,
     defaultPower: Float = 0f
-) : MotorController(opMode, motors, powerMultiplier, brake, defaultPower) {
+) : MotorController(opMode, motors, powerMultiplier, brake, defaultPower), Waitable {
 
     private var privateDirection: Direction = Direction.STOP
 
@@ -115,23 +114,18 @@ abstract class NonPositionalMotorController @JvmOverloads constructor(
             setAll(value = value * powerMultiplier, with = ::moveMotor)
         }
 
-    abstract fun moveMotor(motor: DcMotorInfo, power: Float)
-
-    protected fun waitSeconds(seconds: Double) {
-        opMode.run {
-            if (this is LinearOpMode) {
-                resetStartTime()
-                while (runtime < seconds && opModeIsActive()) {}
-            }
-        }
+    override fun stop() {
+        direction = Direction.STOP
     }
 
-    fun move(power: Float = defaultPower, direction: Direction = Direction.FORWARDS, seconds: Double? = null) {
+    abstract fun moveMotor(motor: DcMotorInfo, power: Float)
+
+    fun move(power: Float = defaultPower, direction: Direction? = null, seconds: Double? = null) {
         this.power = power with direction
 
         if (seconds != null) {
             waitSeconds(seconds)
-            this.direction = Direction.STOP
+            this.stop()
         }
     }
 }
@@ -146,6 +140,20 @@ open class PowerBasedNonPositionalMotorController @JvmOverloads constructor(
 
     override fun moveMotor(motor: DcMotorInfo, power: Float) {
         motor.encoderMode = DcMotor.RunMode.RUN_USING_ENCODER
+        motor.runPower = power
+    }
+}
+
+open class SpeedBasedNonPositionalMotorController @JvmOverloads constructor(
+    opMode: OpMode,
+    motors: MutableCollection<DcMotorInfo> = HashSet(),
+    powerMultiplier: Float = 1f,
+    brake: Boolean? = true,
+    defaultPower: Float = 0f
+) : NonPositionalMotorController(opMode, motors, powerMultiplier, brake, defaultPower) {
+
+    override fun moveMotor(motor: DcMotorInfo, power: Float) {
+        motor.encoderMode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
         motor.runPower = power
     }
 }
@@ -179,53 +187,47 @@ class WheelList (
         throw NotImplementedError("Cannot add more than four wheels to WheelList")
 }
 
-open class SpeedBasedNonPositionalMotorController @JvmOverloads constructor(
-    opMode: OpMode,
-    motors: MutableCollection<DcMotorInfo> = HashSet(),
-    powerMultiplier: Float = 1f,
-    brake: Boolean? = true,
-    defaultPower: Float = 0f
-) : NonPositionalMotorController(opMode, motors, powerMultiplier, brake, defaultPower) {
-
-    override fun moveMotor(motor: DcMotorInfo, power: Float) {
-        motor.encoderMode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
-        motor.runPower = power
-    }
-}
-
-interface Driveable {
+internal interface Driveable : Waitable {
     val rotationSpeed: Float
     val wheelList: WheelList
-}
 
-fun <T> T.drive(forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f)
-        where T : Driveable, T : MotorController {
+    fun drive(forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f) {
 
-    var frontLeft = forward + right + rotationSpeed * clockwise
-    var frontRight = forward - right - rotationSpeed * clockwise
-    var backLeft = forward - right + rotationSpeed * clockwise
-    var backRight = forward + right - rotationSpeed * clockwise
+        var frontLeft = forward + right + rotationSpeed * clockwise
+        var frontRight = forward - right - rotationSpeed * clockwise
+        var backLeft = forward - right + rotationSpeed * clockwise
+        var backRight = forward + right - rotationSpeed * clockwise
 
-    val max = Collections.max(
-        listOf(frontLeft, frontRight, backLeft, backRight)
-            .map(::abs)
-    ) // gets the largest absolute value of the direction powers
+        val max = Collections.max(
+            listOf(frontLeft, frontRight, backLeft, backRight)
+                .map(::abs)
+        ) // gets the largest absolute value of the direction powers
 
-    if (max > 1) {
-        frontLeft /= max
-        frontRight /= max
-        backLeft /= max
-        backRight /= max
+        if (max > 1) {
+            frontLeft /= max
+            frontRight /= max
+            backLeft /= max
+            backRight /= max
+        }
+
+        wheelList.run {
+            this.frontLeft.runPower = frontLeft
+            this.frontRight.runPower = frontRight
+            this.backRight.runPower = backRight
+            this.backLeft.runPower = backLeft
+        }
     }
 
-    wheelList.run {
-        this.frontLeft.runPower = frontLeft
-        this.frontRight.runPower = frontRight
-        this.backRight.runPower = backRight
-        this.backLeft.runPower = backLeft
+    fun stopDriving() = drive(0f, 0f, 0f)
+
+    fun driveSeconds(seconds: Double,
+                     forward: Float = 0f, right: Float = 0f, clockwise: Float = 0f) {
+
+        drive(forward, right, clockwise)
+        waitSeconds(seconds)
+        stopDriving()
     }
 }
-
 
 class DriveablePowerBasedNonPositionalMotorController @JvmOverloads constructor(
     opMode: OpMode,
