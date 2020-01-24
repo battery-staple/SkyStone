@@ -1,16 +1,14 @@
 package org.firstinspires.ftc.teamcode
 
+//import java.lang.Math.*
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
-
 import org.firstinspires.ftc.robotcore.external.ClassFactory
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector
 import org.firstinspires.ftc.teamcode.helpers.*
-//import java.lang.Math.*
-import kotlin.math.*
-import org.firstinspires.ftc.teamcode.helpers.Direction.*
+import org.firstinspires.ftc.teamcode.helpers.Direction.FORWARDS
 
 
 @Autonomous(name = "Vision Drive", group = "Iterative Opmode")
@@ -34,12 +32,14 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelper, DcMotorInfoOpMod
 //    internal var clawDirection = Direction.STOP
 //    internal var slideDirection = Direction.STOP
 
-    private val wheels = DriveablePowerBasedNonPositionalMotorController(this, WheelList(
-        frontLeft = DcMotorInfo.fromName(motorName = "frontLeft", power = -1f),
-        frontRight = DcMotorInfo.fromName(motorName = "frontRight", power = 1f),
-        backLeft = DcMotorInfo.fromName(motorName = "backLeft", power = -1f),
-        backRight = DcMotorInfo.fromName(motorName = "backRight", power = 1f)
-    ))
+    private val wheels by lazy {
+        DriveablePowerBasedNonPositionalMotorController(this, WheelList(
+            frontLeft = DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "frontLeft", power = -1f),
+            frontRight = DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "frontRight", power = 1f),
+            backLeft = DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "backLeft", power = -1f),
+            backRight = DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "backRight", power = 1f)
+        ))
+    }
 
 //    private val frontLeft = PowerBasedNonPositionalMotorController(this).apply {
 //        powerMultiplier = drivePower
@@ -54,25 +54,32 @@ class Autonomous : LinearOpMode(), MotorControllerOpModeHelper, DcMotorInfoOpMod
 //        powerMultiplier = drivePower
 //    }
 
-    private val arm = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
-        DcMotorInfo.fromName(motorName = "arm")
-    )
-    ).apply {
-        direction = STOP
-        defaultPower = 1f
+    private val arm by lazy {
+        PowerBasedNonPositionalMotorController(
+            this, motors = arrayListOf(
+                DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "arm")
+            )
+        ).apply {
+//            direction = STOP
+            defaultPower = 1f
+        }
     }
-    private val claw = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
-        DcMotorInfo.fromName(motorName = "intake")
-    )).apply {
-        direction = STOP
+    private val claw by lazy {
+        PowerBasedNonPositionalMotorController(
+            this, motors = arrayListOf(
+                DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "intake")
+            )
+        )/*.apply {
+            direction = STOP
+        }*/
     }
-    private val slide = PowerBasedNonPositionalMotorController(this, motors = arrayListOf(
-        DcMotorInfo.fromName(motorName = "liftRight", power = -1f),
-        DcMotorInfo.fromName(motorName = "liftLeft", power = 1f)
-    ), brake = true)
-
-    private fun isPressed(button: Float): Boolean {
-        return button > 0.1 //change this value if necessary
+    private val slide by lazy {
+        PowerBasedNonPositionalMotorController(
+            this, motors = arrayListOf(
+                DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "liftRight", power = -1f),
+                DcMotorInfo.fromName(hardwareMap = hardwareMap, motorName = "liftLeft", power = 1f)
+            ), brake = true
+        )
     }
 
     override fun runOpMode() {
